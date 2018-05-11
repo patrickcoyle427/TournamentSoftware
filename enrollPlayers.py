@@ -8,9 +8,6 @@ enrollPlayers.py - enroll players into an event and write them to
 
 # TODO:
 
-# Implelment how the window will look. I think the enrollment section should
-#   be on the left and the tableview of all the players should be right
-#
 # Have this load the XML tournament file and write the players to it
 #
 # Window title should display the tournament's name
@@ -23,7 +20,7 @@ enrollPlayers.py - enroll players into an event and write them to
 #   menu. You should be able to change the player's name or remove them
 #   from the list
 
-import sys, os, random
+import sys, os
 
 import xml.etree.ElementTree as ET
 
@@ -36,8 +33,6 @@ from PyQt5.QtCore import Qt
 
 
 class EnrollPlayers(QWidget):
-
-    tempID = 'TEMP'
 
     currentIDNum = 0
 
@@ -153,9 +148,39 @@ class EnrollPlayers(QWidget):
 
     def addPlayer(self):
 
-        pass
+        firstName = self.playerFirstName.text()
+        lastName = self.playerLastName.text()
 
-        # This will add the player to the table widget
+        if firstName != '' or lastName != '':
+
+            self.currentIDNum += 1
+
+            tempID = 'TEMP{}'.format(str(self.currentIDNum).zfill(4))
+            # Builds a temporary ID for the player.
+            # Temp IDs are good for just getting a tournament up and running.
+
+            self.enrolled_table.insertRow(self.enrolled_table.rowCount())
+
+            currentRow = self.enrolled_table.rowCount() - 1
+
+            self.enrolled_table.setItem(currentRow, 0, QTableWidgetItem('{}, {}'.
+                                                        format(lastName, firstName)))
+            self.enrolled_table.setItem(currentRow, 1, QTableWidgetItem(tempID))
+
+            self.enrolled_table.setSortingEnabled(True)
+            self.enrolled_table.horizontalHeader().setSortIndicator(0, Qt.AscendingOrder)
+            self.enrolled_table.setSortingEnabled(False)
+            # This quickly enables sorting, sorts by the first column which is player
+            # name, and then disables sorting so the user can't change the ordered.
+            # This doesn't care about the order people were entered in, users just
+            # need to be able to quickly see who is enrolled
+
+            self.clear()
+            # Calls clear to erase the entrant's name after they've been enrolled.
+
+            self.playerFirstName.setFocus(True)
+            # Returns the cursor to the first name box to make entering
+            # players faster!
 
     def clear(self):
 
