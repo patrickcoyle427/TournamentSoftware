@@ -12,22 +12,25 @@ enrollPlayers.py - enroll players into an event and write them to
 #
 # make sure to clear any players that may have been in the XML document
 # before writing names to this. The prototype currently is just adding more players
-# to the xml file, which is intended, but not what I want for this
-#
-# add checks to make sure xml file exists
+# to the xml file, which is intended. This may not be needed as you should never
+# be able to begin an event twice, and I want to be able to add players in later
 #
 # Make the cells of the table able to be right clicked with custom
 #   menu. You should be able to change the player's name or remove them
 #   from the list
+#
+#
+# Make variable names more consistent: stop using event and start using touranment
 
-import sys, os
+import sys, os.path
 
 import xml.etree.ElementTree as ET
 
 from PyQt5.QtWidgets import (QWidget, QPushButton, QApplication,
                              QTableWidgetItem, QAbstractItemView,
                              QLabel, QLineEdit, QVBoxLayout,
-                             QHBoxLayout, QTableWidget, QHeaderView)
+                             QHBoxLayout, QTableWidget, QHeaderView,
+                             QMessageBox)
 
 from PyQt5.QtCore import Qt
 
@@ -35,7 +38,7 @@ from PyQt5.QtCore import Qt
 
 sys - used for safely exiting the program
 
-os - used for checking the status of the tournament file
+os.path - used for checking if the tournament file exists
 
 PyQt5.QtWidgets - Various methods for constructing a GUI
 
@@ -51,25 +54,39 @@ class EnrollPlayers(QWidget):
 
     def __init__(self, event):
 
-        self.Event = event
-
-        self.Tree = self.loadEvent(self.Event)
-
-        self.Tournament = self.Tree.getroot()
-
-        # self.event, self.tree, and self.tournament are all used
-        # to help write the xml
-
-        thisEventName = self.Tournament[0][0].text
-
-        # Used to make the GUI display the tournament name
-        # as the title of the window
-
         super().__init__()
-
         # Runs the __init__ of QWidget, which EnrollPlayers inherits from
 
-        self.initUI(thisEventName)
+        if os.path.exists(event):
+            # Check to make sure the event exists
+
+            self.Event = event
+
+            self.Tree = self.loadEvent(self.Event)
+
+            self.Tournament = self.Tree.getroot()
+
+            # self.event, self.tree, and self.tournament are all used
+            # to help write the xml
+
+            thisEventName = self.Tournament[0][0].text
+
+            # Used to make the GUI display the tournament name
+            # as the title of the window
+
+            self.initUI(thisEventName)
+
+        else:
+
+            error = QMessageBox()
+
+            error.setIcon(QMessageBox.Information)
+            error.setText('No Tournament Found!')
+            error.setWindowTitle('No Tournament Found')
+
+            error.exec_()
+
+            sys.exit(0) 
 
     def initUI(self, eventName):
 
@@ -131,8 +148,8 @@ class EnrollPlayers(QWidget):
 
         begin_event_layout = QHBoxLayout()
 
-        begin_event_button = QPushButton('Begin Event', self)
-        begin_event_button.clicked.connect(self.beginEvent)
+        begin_event_button = QPushButton('Begin Tournament', self)
+        begin_event_button.clicked.connect(self.beginTournament)
 
         begin_event_layout.addStretch(1)
 
@@ -180,7 +197,7 @@ class EnrollPlayers(QWidget):
         firstName = self.playerFirstName.text()
         lastName = self.playerLastName.text()
 
-        if firstName != '' or lastName != '':
+        if firstName.strip() != '' and lastName.strip() != '':
 
             self.currentIDNum += 1
 
@@ -200,16 +217,34 @@ class EnrollPlayers(QWidget):
             self.enrolled_table.horizontalHeader().setSortIndicator(0, Qt.AscendingOrder)
             self.enrolled_table.setSortingEnabled(False)
             # This quickly enables sorting, sorts by the first column which is player
-            # name, and then disables sorting so the user can't change the ordered.
+            # name, and then disables sorting so the user can't change the order.
             # This doesn't care about the order people were entered in, users just
             # need to be able to quickly see who is enrolled
 
             self.clear()
             # Calls clear to erase the entrant's name after they've been enrolled.
 
-            self.playerFirstName.setFocus(True)
+            self.playerFirstName.setFocus()
             # Returns the cursor to the first name box to make entering
             # players faster!
+
+        else:
+
+            nameError = QMessageBox()
+            nameError.setIcon(QMessageBox.Information)
+            nameError.setWindowTitle('Blank Name')
+
+            if firstName.strip() == '':
+
+                self.playerFirstName.setFocus()
+                nameError.setText("The Player's first name is blank.")
+
+            else:
+
+                self.playerLastName.setFocus()
+                nameError.setText("The Player's last name is blank.")
+
+            nameError.exec_()
 
     def clear(self):
 
@@ -241,7 +276,7 @@ class EnrollPlayers(QWidget):
             # appends a tuple with the information to the enrolled_players list
 
         return enrolled_players
-        # This is passed
+        # This is passed to writeToFile
 
     def loadEvent(self, event):
 
@@ -253,9 +288,7 @@ class EnrollPlayers(QWidget):
         return tree
         # this is used by the __init__ to load the xml tree
 
-    def beginEvent(self):
-
-        enrolled_players = self.getTableData()
+    def writeToFile(self, enrolled_players):
 
         players = self.Tournament[1]
 
@@ -289,10 +322,46 @@ class EnrollPlayers(QWidget):
                        encoding = 'utf-8',
                        xml_declaration = True)
 
-        if __name__ == '__main__':
+    def beginTournament(self):
 
-            self.close()
-            # For testing, will be removed later
+        enrolled_players = self.getTableData()
+
+        total_players = len(enrolled_players)
+
+        if len(enrolled_players) < 4:
+
+            # Prevents the user from creating an event with less than 4 players
+
+            lessThan4Error = QMessageBox()
+            lessThan4Error.setIcon(QMessageBox.Information)
+            lessThan4Error.setText('A tournament cannot have less than 4 players!')
+            lessThan4Error.setWindowTitle('Not Enough Players')
+
+            # Tournaments with less than 4 players just don't work. With 4 players
+            # You can have 3 rounds and a definite winner.
+
+            self.playerFirstName.setFocus()
+
+            lessThan4Error.exec_()
+
+        else:
+
+            eventCreated = QMessageBox()
+            eventCreated.setIcon(QMessageBox.Information)
+            eventCreated.setText('{} Players were enrolled.'.format(total_players))
+            eventCreated.setWindowTitle('Players Successfully Enrolled')
+
+            # Alerts the user that players have been entered, and gives the total number
+            # so the user can double check how many people have been entered.
+
+            eventCreated.exec_()
+
+            self.writeToFile(enrolled_players)
+
+            if __name__ == '__main__':
+
+                self.close()
+                # For testing, will be removed later
         
 
 if __name__ == '__main__':
