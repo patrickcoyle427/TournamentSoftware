@@ -175,10 +175,6 @@ class CreateTournament(QWidget):
         # Function to make sure the play within pods option is only avaialable
         # if the user actually wants a draft in the first place.
 
-    def test(self):
-
-        print('success')
-
     def write_tournament_xml_file(self):
 
         def write_file():
