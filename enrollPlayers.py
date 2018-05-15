@@ -8,13 +8,13 @@ enrollPlayers.py - enroll players into an event and write them to
 
 # TODO:
 
-# Have this load the XML tournament file and write the players to it
-#
-# Window title should display the tournament's name
-#
 # Add way to add own ID numbers instead of just using temp IDs
 #
-# Make addPlayer functional
+# make sure to clear any players that may have been in the XML document
+# before writing names to this. The prototype currently is just adding more players
+# to the xml file, which is intended, but not what I want for this
+#
+# add checks to make sure xml file exists
 #
 # Make the cells of the table able to be right clicked with custom
 #   menu. You should be able to change the player's name or remove them
@@ -31,18 +31,47 @@ from PyQt5.QtWidgets import (QWidget, QPushButton, QApplication,
 
 from PyQt5.QtCore import Qt
 
+'''
+
+sys - used for safely exiting the program
+
+os - used for checking the status of the tournament file
+
+PyQt5.QtWidgets - Various methods for constructing a GUI
+
+PyQt5.QtCore - Contains commonly used information, in this case sorting
+               in ascending order
+
+'''
+
 
 class EnrollPlayers(QWidget):
 
     currentIDNum = 0
 
-    def __init__(self):
+    def __init__(self, event):
+
+        self.Event = event
+
+        self.Tree = self.loadEvent(self.Event)
+
+        self.Tournament = self.Tree.getroot()
+
+        # self.event, self.tree, and self.tournament are all used
+        # to help write the xml
+
+        thisEventName = self.Tournament[0][0].text
+
+        # Used to make the GUI display the tournament name
+        # as the title of the window
 
         super().__init__()
 
-        self.initUI()
+        # Runs the __init__ of QWidget, which EnrollPlayers inherits from
 
-    def initUI(self):
+        self.initUI(thisEventName)
+
+    def initUI(self, eventName):
 
         window_layout = QHBoxLayout()
         self.setLayout(window_layout)
@@ -141,7 +170,7 @@ class EnrollPlayers(QWidget):
         window_layout.addLayout(add_player_layout)
 
         self.setGeometry(200, 200, 700, 500)
-        self.setWindowTitle('Tournament Name')
+        self.setWindowTitle(eventName)
 
         self.playerFirstName.setFocus(True)
         self.show()
@@ -184,17 +213,90 @@ class EnrollPlayers(QWidget):
 
     def clear(self):
 
+        # Helper function to clear the player's name after something is done,
+        # such as when a player is entered
+
         self.playerFirstName.setText('')
         self.playerLastName.setText('')
 
         self.playerFirstName.setFocus(True)
 
+    def getTableData(self):
+
+        enrolled_players = []
+
+        for row in range(self.enrolled_table.rowCount()):
+
+            playerNameItem = self.enrolled_table.item(row, 0)
+            playerIDItem = self.enrolled_table.item(row, 1)
+            # gets the items from the table
+
+            playerLastName, playerFirstName = playerNameItem.text().split(', ')
+            # Split's first and last name, as they are combined in the cell
+            # but saved separately in the xml document
+            
+            playerID = playerIDItem.text()
+
+            enrolled_players.append((playerID, playerFirstName, playerLastName))
+            # appends a tuple with the information to the enrolled_players list
+
+        return enrolled_players
+        # This is passed
+
+    def loadEvent(self, event):
+
+        # Helper function to load the event so it can be accessed by
+        # the other methods
+
+        tree = ET.parse(event)
+
+        return tree
+        # this is used by the __init__ to load the xml tree
+
     def beginEvent(self):
 
-        pass
+        enrolled_players = self.getTableData()
+
+        players = self.Tournament[1]
+
+        for idNum, first, last in enrolled_players:
+
+            # Unpacks the tuples saved in enrolled_players
+            # to be written to the xml file
+
+            player = ET.SubElement(players, 'Player')
+
+            idNumber = ET.SubElement(player, 'IDNumber')
+            idNumber.text = idNum
+
+            firstName = ET.SubElement(player, 'FirstName')
+            firstName.text = first
+
+            lastName = ET.SubElement(player, 'LastName')
+            lastName.text = last
+
+            wins = ET.SubElement(player, 'Wins')
+            wins.text = '0'
+
+            draws = ET.SubElement(player, 'Draws')
+            draws.text = '0'
+
+            # Wins and draws are both used during player pairings
+
+        to_write = self.Tree
+
+        to_write.write(self.Event,
+                       encoding = 'utf-8',
+                       xml_declaration = True)
+
+        if __name__ == '__main__':
+
+            self.close()
+            # For testing, will be removed later
+        
 
 if __name__ == '__main__':
 
     app = QApplication(sys.argv)
-    enroll = EnrollPlayers()
+    enroll = EnrollPlayers('Tournaments\\test ID6354692.xml')
     sys.exit(app.exec_())
