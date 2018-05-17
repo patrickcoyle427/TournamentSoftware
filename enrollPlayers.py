@@ -10,15 +10,7 @@ enrollPlayers.py - enroll players into an event and write them to
 
 # Add way to add own ID numbers instead of just using temp IDs
 #
-# make sure to clear any players that may have been in the XML document
-# before writing names to this. The prototype currently is just adding more players
-# to the xml file, which is intended. This may not be needed as you should never
-# be able to begin an event twice, and I want to be able to add players in later
-#
-# Make the cells of the table able to be right clicked with custom
-#   menu. You should be able to change the player's name or remove them
-#   from the list
-#
+# Create a GUI for editing a player's name
 #
 # Make variable names more consistent: stop using event and start using touranment
 
@@ -30,7 +22,7 @@ from PyQt5.QtWidgets import (QWidget, QPushButton, QApplication,
                              QTableWidgetItem, QAbstractItemView,
                              QLabel, QLineEdit, QVBoxLayout,
                              QHBoxLayout, QTableWidget, QHeaderView,
-                             QMessageBox)
+                             QMessageBox, QMenu)
 
 from PyQt5.QtCore import Qt
 
@@ -165,10 +157,12 @@ class EnrollPlayers(QWidget):
         # with the table
         
         self.enrolled_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.enrolled_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.enrolled_table.verticalHeader().hide()
         # These prevent the user from editing the table cells,
+        self.enrolled_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         # Select the whole row when one is clicked
+        self.enrolled_table.setSelectionMode(QAbstractItemView.SingleSelection)
+        # Prevents selection of multiple rows.
+        self.enrolled_table.verticalHeader().hide()
         # and hide the headers that appear to the left of the rows.
         
         self.enrolled_table.setColumnCount(2)
@@ -245,6 +239,37 @@ class EnrollPlayers(QWidget):
                 nameError.setText("The Player's last name is blank.")
 
             nameError.exec_()
+
+    def contextMenuEvent(self, event):
+
+        selection = self.enrolled_table.selectedItems()
+
+        if len(selection) > 0:
+
+            table_menu = QMenu(self)
+
+            renamePlayer = table_menu.addAction('Rename Player')
+            dropPlayer = table_menu.addAction('Drop Player')
+
+            action = table_menu.exec_(self.mapToGlobal(event.pos()))
+
+            if action == dropPlayer:
+
+                row = selection[0].row()
+
+                self.enrolled_table.removeRow(row)
+
+            self.enrolled_table.clearSelection()
+            # Automatically clears the selection after it is right clicked
+            # So the user doesn't accidently keep clicking the same cell
+
+            elif action == renamePlayer:
+
+                pass
+                #TODO: Create a menu that pops up to edit the player's name.
+
+            
+
 
     def clear(self):
 
