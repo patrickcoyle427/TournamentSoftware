@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (QWidget, QPushButton, QApplication,
                              QTableWidgetItem, QAbstractItemView,
                              QLabel, QLineEdit, QVBoxLayout,
                              QHBoxLayout, QTableWidget, QHeaderView,
-                             QMessageBox, QMenu)
+                             QMessageBox, QMenu, QDialog)
 
 from PyQt5.QtCore import Qt
 
@@ -248,8 +248,8 @@ class EnrollPlayers(QWidget):
 
             table_menu = QMenu(self)
 
-            renamePlayer = table_menu.addAction('Rename Player')
             dropPlayer = table_menu.addAction('Drop Player')
+            renamePlayer = table_menu.addAction('Rename Player')
 
             action = table_menu.exec_(self.mapToGlobal(event.pos()))
 
@@ -259,16 +259,73 @@ class EnrollPlayers(QWidget):
 
                 self.enrolled_table.removeRow(row)
 
+            elif action == renamePlayer:
+
+                # TODO: Need to set the player's name that is being edited to the default
+                #       text of the QLineEdit
+
+                editNameWindow = QDialog()
+                # Creates a dialog box that will pop up if the user choses rename player
+
+                dialogLayout = QVBoxLayout()
+
+                ### Dialog First Name Change ###
+
+                dialogFirstNameLayout = QHBoxLayout()
+                editFirstNameLabel = QLabel('New First Name:')
+                editFirstName = QLineEdit()
+
+                dialogFirstNameLayout.addWidget(editFirstNameLabel)
+                dialogFirstNameLayout.addWidget(editFirstName)
+
+                dialogLayout.addLayout(dialogFirstNameLayout)
+
+                ### Dialog Last Name Change ###
+                
+                dialogLastNameLayout = QHBoxLayout()
+                
+                editLastNameLabel = QLabel('New Last Name:')
+                editLastName = QLineEdit()
+                editLastName.setText(
+
+                dialogLastNameLayout.addWidget(editLastNameLabel)
+                dialogLastNameLayout.addWidget(editFirstName)
+
+                ### Dialog Buttons ###
+                 
+                dialogButtons = QHBoxLayout()
+                
+                editName = QPushButton('Edit Name')
+                editName.clicked.connect(editNameWindow.accept)
+                
+                cancelName = QPushButton('Cancel')
+                cancelName.clicked.connect(editNameWindow.reject)
+
+                dialogButtons.addWidget(editName)
+                dialogButtons.addWidget(cancelName)
+
+                dialogLayout.addLayout(dialogButtons)
+
+                ###    
+            
+                editNameWindow.setWindowTitle('Change Player Name')
+                editNameWindow.setGeometry(300, 300, 300, 200)
+                editNameWindow.setLayout(dialogLayout)
+
+                choice = editNameWindow.exec_()
+                # Returns a number corresponding to the user's choice.
+                # 1 = Accept (Hit the ok button)
+                # 0 = Reject (Hit the cancel button)
+
+                if choice == 1:
+
+                    pass
+
+                #TODO: Create a menu that pops up to edit the player's name
+            
             self.enrolled_table.clearSelection()
             # Automatically clears the selection after it is right clicked
             # So the user doesn't accidently keep clicking the same cell
-
-            elif action == renamePlayer:
-
-                pass
-                #TODO: Create a menu that pops up to edit the player's name.
-
-            
 
 
     def clear(self):
