@@ -1,189 +1,93 @@
 #!/usr/bin/python3
 
-'''
-pairings.py - prototype pairings for the tournament software
+"""
+pairings.py - Creates pairings (list of who is playing against who in
+              a tournament) and displays them. Writes the results back
+              to the tournament's XML file.
+"""
 
-'''
-import random
+#TODO:
+#
+# Build a GUI
+#
+# implement the pairings, which has been finished in pairings_proto
+#
+# Have this read the tourament file to build pairings.
+#
+# Should be able to write click to enter pairings
+# Also needs keyboard shortcuts for quick pairing entry
+#
+# Make best of 1 and best of 3 both work, but start with best of 1
+#
+# Window title should be the tournament's name in the file
 
-from operator import itemgetter
+import sys, random, os.path
 
-# TO DO:
-# Make tiebreakers?
+import xml.etree.ElementTree as ET
 
-def create_to_pair(players):
+from PyQt5.QtWidgets import (QApplication, QWidget, QPushButton,
+                             QTableWidgetItem)
+# More imports to come
 
-    # creates the structure that the pairings will use to calculate opponents
+class Pairings(QWidget):
 
-    to_pair = [[player, 0, 0, 0] for player in players]
+    def __init__(self, tournament):
 
-        # The numbers corrispond to number of wins, number of draws,
-        # and total points.
+        super().__init__()
 
-        # Draws are worth 1 point, wins are worth 3 points. Total points is the sum of
-        # 3(wins) + draws
+        if os.path.exists(tournament):
 
-    testing = [['Test, Player', 3, 0, 0], ['1Test, Player', 3, 0, 0], ['2Test, Player', 3, 0, 0],
-               ['3Test, Player', 6, 0, 0]]
+            self.tournament = tournament
 
-    for player in testing:
+            self.tree = self.load_tournament(self.tournament)
 
-               player[3] = player[1] + player[2]
-               to_pair.append(player)
+            self.tournament_root = self.tree.getroot()
+            # self.tournament, self.tree, and self.tournament_root are all used
+            # to help write the xml
 
-    # the above code is for testing purposes. It won't be in the finished code.
+            this_tournament_name = self.tournament_root[0][0].text
+            # Used to make the GUI display the tournament name
+            # as the title of the window
 
-    to_pair = sorted(to_pair, key=itemgetter(1))
-    # Sorts the list in ascending order based on the total points the players have.
+            self.initUI(this_tournament_name)
 
-    to_pair.reverse()
-    # Reverses the to_pair list so that it is in descending order. Players with the most points
-    # are always paired first
+    def initUI(self, tournament_name):
 
-    return(to_pair)
+        # Tournament Pairing window notes:
+        # Left side will show the pairings, right side will be how
+        # the user interacts with said pairings
+        #
+        # Left side: Table to display the pairings. Should be able to
+        #            display the pairings in a variety of ways, including
+        #            uncompleted matches, by table number or by player name
+        #            user should be able to right click and enter a result.
+        #
+        # Right Side: Lets the user enter in results. Should give the user
+        #             options to help filter pairings, by typing in the table
+        #             number or by player's name.
+        #             should be able to use the keyboard for entering in
+        #             results quickly.
 
-def create_points_container(to_pair):
+        ### Misc Window Settings ###
 
-    points_container = {}
+        self.setGeometry(200, 200, 700, 500)
+        self.setWindowTitle(tournament_name)
 
-    for player in to_pair:
+        self.show()
+        
 
-        total_points = player[3]
+    def load_tournament(self, tournament):
 
-        if points_container.get(total_points) == None:
+        # Helper function to load the event so it can be accessed by
+        # the other methods
 
-            points_container[total_points] = []
+        tree = ET.parse(tournament)
 
-        points_container[total_points].append(player)
-
-    return points_container
-
-        # The lists that are generated here will be checked in the next section that actually creates
-        # the pairings for the players.
-
-def pair_players(to_pair):
-
-    bye_granted = False
-
-    pairings = []
-
-    already_paired = []
-
-    # Holds the names of players who have already been paired. They will be skipped
-    # over in the for loop if they already do have one.
-
-    for player in to_pair:
-
-        if player not in already_paired:
-
-            total_points = player[3]
-
-            # Finds the total points the player hasn't been paired
-            # if they HAVE already been paired, they are skipped over.
-
-            if points_container[total_points]:
-
-                # Checks if the list has more than 0 players. 
-
-                match_exists = False
-
-                points_to_check = total_points
-
-                # if match_exists is False, there is no player to match up against the opponent
-                # currently, and one needs to be found. If none around found in the player's
-                # total_points is saved in a variable because if no matches are found, the player's
-                # points are decremented by 1 to see if any opponents at a lower point value exist
-                # to play against
-
-                # If points_to_check ever reaches -1, the player is given a bye, which is a free win
-                # because of an uneven number of players.
-
-                while match_exists == False:
-
-                # Check to see if there is anyone that can play against the player
-
-                    if points_container.get(points_to_check) != None:
-
-                        for opponent in points_container[points_to_check]:
-
-                            # checks all the opponents in the player's point bracket to see if there is
-                            # anyone who hasn't been paired. If there is someone this loop is broken and
-                            # a pairing is found.
-
-                            if opponent not in already_paired and opponent != player:
-
-                                match_exists = True
-                                break
-
-                                # Breaks out of this loop if a match can be found.
-                                
-
-                    if match_exists == False:
-
-                        points_to_check -= 1
-                        # player's points decremented to see if there are any more players
-
-                        if points_to_check == -1:
-
-                            # If no match is found, the player's points to check will hit -1.
-                            # if -1 is reached that there is an odd number of players in the event,
-                            # in which case the player receives a free win.
-
-                            pairings.append((player, ['BYE', 0, 0, 0]))
-                            already_paired.append(player)
-                            match_exists = True
-                            bye_granted = True
-
-                if bye_granted == False:
-
-                    # The bye is always the last pairing created.
-                    # If a bye is granted that means a pairing doesn't need to be found.
-
-                    possible_opponent = random.choice(points_container[points_to_check])
-
-                    while possible_opponent in already_paired or possible_opponent == player:
-
-                        possible_opponent = random.choice(points_container[points_to_check])
-
-                        # Keeps selecting random players until one that can be paired is found
-
-                    pairing = (player, possible_opponent)
-
-                    already_paired += list(pairing)
-
-                    pairings.append(pairing)
-
-    return pairings
-
-def print_pairings(pairings):
-
-    current_table_number = 0
-
-    for pairing in pairings:
-
-        current_table_number += 1
-
-        print('{0}. {1} ({2} points) VS {3} ({4} points)'.format(current_table_number,
-                                                        pairing[0][0], pairing[0][3],
-                                                        pairing[1][0], pairing[1][3]))
-                                        
-
+        return tree
+        # this is used by the __init__ to load the xml tree
+        
 if __name__ == '__main__':
 
-    # Dict that will hold sorted players
-
-    players = ['Nifterik, Emma', 'Mathieson, Harith',
-           'Terry, Methoataske', 'Bell, Naseer',
-           'Hamilton, Prasad', 'Kiefer, Yeong-Cheol',
-           'Li, Mererid', 'Linville, Dieuwert',
-           'Pat Coyle', 'Mitty Coyle']
-    
-    # Players list will be pulled from the XML file normally
-
-    player_list_to_pair = create_to_pair(players)
-
-    points_container = create_points_container(player_list_to_pair)
-
-    pairings = pair_players(player_list_to_pair)
-
-    print_pairings(pairings)
+    app = QApplication(sys.argv)
+    pair = Pairings('Tournaments\\test ID6354692.xml')
+    sys.exit(app.exec_())
