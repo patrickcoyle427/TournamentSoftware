@@ -1,18 +1,14 @@
 #!/usr/bin/python3
 
-'''
+"""
 enrollPlayers.py - enroll players into an event and write them to
                    the tournament file created with createNewTournament.py
 
-'''
+"""
 
 # TODO:
 
 # Add way to add own ID numbers instead of just using temp IDs
-#
-# Create a GUI for editing a player's name
-#
-# Make variable names more consistent: stop using event and start using touranment
 
 import sys, os.path
 
@@ -26,7 +22,7 @@ from PyQt5.QtWidgets import (QWidget, QPushButton, QApplication,
 
 from PyQt5.QtCore import Qt
 
-'''
+"""
 
 sys - used for safely exiting the program
 
@@ -37,36 +33,36 @@ PyQt5.QtWidgets - Various methods for constructing a GUI
 PyQt5.QtCore - Contains commonly used information, in this case sorting
                in ascending order
 
-'''
+"""
 
 
 class EnrollPlayers(QWidget):
 
-    currentIDNum = 0
+    current_id_num = 0
 
-    def __init__(self, event):
+    def __init__(self, tournament):
 
         super().__init__()
         # Runs the __init__ of QWidget, which EnrollPlayers inherits from
 
-        if os.path.exists(event):
-            # Check to make sure the event exists
+        if os.path.exists(tournament):
+            # Check to make sure the tournament exists
 
-            self.Event = event
+            self.tournament = tournament
 
-            self.Tree = self.loadEvent(self.Event)
+            self.tree = self.loadTournament(self.tournament)
 
-            self.Tournament = self.Tree.getroot()
+            self.tournament_root = self.tree.getroot()
 
-            # self.event, self.tree, and self.tournament are all used
+            # self.tournament, self.tree, and self.tournament_root are all used
             # to help write the xml
 
-            thisEventName = self.Tournament[0][0].text
+            this_tournament_name = self.tournament_root[0][0].text
 
             # Used to make the GUI display the tournament name
             # as the title of the window
 
-            self.initUI(thisEventName)
+            self.initUI(this_tournament_name)
 
         else:
 
@@ -80,7 +76,7 @@ class EnrollPlayers(QWidget):
 
             sys.exit(0) 
 
-    def initUI(self, eventName):
+    def initUI(self, tournamentName):
 
         window_layout = QHBoxLayout()
         self.setLayout(window_layout)
@@ -95,15 +91,15 @@ class EnrollPlayers(QWidget):
         first_name_layout = QHBoxLayout()
         first_name_layout.setSpacing(1)
 
-        self.firstNameLabel = QLabel('First Name: ', self)
+        self.first_name_label = QLabel('First Name: ', self)
 
-        self.playerFirstName = QLineEdit()
-        self.playerFirstName.returnPressed.connect(self.addPlayer)
-        self.playerFirstName.setFocus(True)
+        self.player_first_name = QLineEdit()
+        self.player_first_name.returnPressed.connect(self.addPlayer)
+        self.player_first_name.setFocus(True)
         # Line that holds the player's first name
 
-        first_name_layout.addWidget(self.firstNameLabel)
-        first_name_layout.addWidget(self.playerFirstName)
+        first_name_layout.addWidget(self.first_name_label)
+        first_name_layout.addWidget(self.player_first_name)
 
         add_player_layout.addLayout(first_name_layout)
         
@@ -112,12 +108,12 @@ class EnrollPlayers(QWidget):
 
         self.lastNameLabel = QLabel('Last Name: ', self)
 
-        self.playerLastName = QLineEdit()
-        self.playerLastName.returnPressed.connect(self.addPlayer)
+        self.player_last_name = QLineEdit()
+        self.player_last_name.returnPressed.connect(self.addPlayer)
         # Line that holds the player's last name
 
         last_name_layout.addWidget(self.lastNameLabel)
-        last_name_layout.addWidget(self.playerLastName)
+        last_name_layout.addWidget(self.player_last_name)
         
         add_player_layout.addLayout(last_name_layout)
 
@@ -138,16 +134,16 @@ class EnrollPlayers(QWidget):
         add_player_layout.addLayout(button_layout)
         add_player_layout.addStretch(1)
 
-        begin_event_layout = QHBoxLayout()
+        begin_tournament_layout = QHBoxLayout()
 
-        begin_event_button = QPushButton('Begin Tournament', self)
-        begin_event_button.clicked.connect(self.beginTournament)
+        begin_tournament_button = QPushButton('Begin Tournament', self)
+        begin_tournament_button.clicked.connect(self.beginTournament)
 
-        begin_event_layout.addStretch(1)
+        begin_tournament_layout.addStretch(1)
 
-        begin_event_layout.addWidget(begin_event_button)
+        begin_tournament_layout.addWidget(begin_tournament_button)
 
-        add_player_layout.addLayout(begin_event_layout)
+        add_player_layout.addLayout(begin_tournament_layout)
 
         ### Table View For Enrolled Players Section ###
 
@@ -181,21 +177,21 @@ class EnrollPlayers(QWidget):
         window_layout.addLayout(add_player_layout)
 
         self.setGeometry(200, 200, 700, 500)
-        self.setWindowTitle(eventName)
+        self.setWindowTitle(tournamentName)
 
-        self.playerFirstName.setFocus(True)
+        self.player_first_name.setFocus(True)
         self.show()
 
     def addPlayer(self):
 
-        firstName = self.playerFirstName.text()
-        lastName = self.playerLastName.text()
+        first_name = self.player_first_name.text()
+        lastName = self.player_last_name.text()
 
-        if firstName.strip() != '' and lastName.strip() != '':
+        if first_name.strip() != '' and lastName.strip() != '':
 
-            self.currentIDNum += 1
+            self.current_id_num += 1
 
-            tempID = 'TEMP{}'.format(str(self.currentIDNum).zfill(4))
+            tempID = 'TEMP{}'.format(str(self.current_id_num).zfill(4))
             # Builds a temporary ID for the player.
             # Temp IDs are good for just getting a tournament up and running.
 
@@ -204,7 +200,7 @@ class EnrollPlayers(QWidget):
             currentRow = self.enrolled_table.rowCount() - 1
 
             self.enrolled_table.setItem(currentRow, 0, QTableWidgetItem('{}, {}'.
-                                                        format(lastName, firstName)))
+                                                        format(lastName, first_name)))
             self.enrolled_table.setItem(currentRow, 1, QTableWidgetItem(tempID))
 
             self.enrolled_table.setSortingEnabled(True)
@@ -218,7 +214,7 @@ class EnrollPlayers(QWidget):
             self.clear()
             # Calls clear to erase the entrant's name after they've been enrolled.
 
-            self.playerFirstName.setFocus()
+            self.player_first_name.setFocus()
             # Returns the cursor to the first name box to make entering
             # players faster!
 
@@ -228,14 +224,14 @@ class EnrollPlayers(QWidget):
             nameError.setIcon(QMessageBox.Information)
             nameError.setWindowTitle('Blank Name')
 
-            if firstName.strip() == '':
+            if first_name.strip() == '':
 
-                self.playerFirstName.setFocus()
+                self.player_first_name.setFocus()
                 nameError.setText("The Player's first name is blank.")
 
             else:
 
-                self.playerLastName.setFocus()
+                self.player_last_name.setFocus()
                 nameError.setText("The Player's last name is blank.")
 
             nameError.exec_()
@@ -261,8 +257,7 @@ class EnrollPlayers(QWidget):
 
             elif action == renamePlayer:
 
-                # TODO: Need to set the player's name that is being edited to the default
-                #       text of the QLineEdit
+                player_last_name, player_first_name = selection[0].text().split(', ')
 
                 editNameWindow = QDialog()
                 # Creates a dialog box that will pop up if the user choses rename player
@@ -274,6 +269,7 @@ class EnrollPlayers(QWidget):
                 dialogFirstNameLayout = QHBoxLayout()
                 editFirstNameLabel = QLabel('New First Name:')
                 editFirstName = QLineEdit()
+                editFirstName.setText(player_first_name)
 
                 dialogFirstNameLayout.addWidget(editFirstNameLabel)
                 dialogFirstNameLayout.addWidget(editFirstName)
@@ -286,10 +282,12 @@ class EnrollPlayers(QWidget):
                 
                 editLastNameLabel = QLabel('New Last Name:')
                 editLastName = QLineEdit()
-                editLastName.setText(
+                editLastName.setText(player_last_name)
 
                 dialogLastNameLayout.addWidget(editLastNameLabel)
-                dialogLastNameLayout.addWidget(editFirstName)
+                dialogLastNameLayout.addWidget(editLastName)
+
+                dialogLayout.addLayout(dialogLastNameLayout)
 
                 ### Dialog Buttons ###
                  
@@ -306,10 +304,10 @@ class EnrollPlayers(QWidget):
 
                 dialogLayout.addLayout(dialogButtons)
 
-                ###    
+                ### Misc Window Settings ###
             
                 editNameWindow.setWindowTitle('Change Player Name')
-                editNameWindow.setGeometry(300, 300, 300, 200)
+                editNameWindow.setGeometry(300, 300, 300, 100)
                 editNameWindow.setLayout(dialogLayout)
 
                 choice = editNameWindow.exec_()
@@ -319,9 +317,12 @@ class EnrollPlayers(QWidget):
 
                 if choice == 1:
 
-                    pass
-
-                #TODO: Create a menu that pops up to edit the player's name
+                    selection[0].setText('{}, {}'.format(editLastName.text(), editFirstName.text()))
+                    
+                    self.enrolled_table.setSortingEnabled(True)
+                    self.enrolled_table.horizontalHeader().setSortIndicator(0, Qt.AscendingOrder)
+                    self.enrolled_table.setSortingEnabled(False)
+                    # Resorts the players names after a name is changed
             
             self.enrolled_table.clearSelection()
             # Automatically clears the selection after it is right clicked
@@ -333,10 +334,10 @@ class EnrollPlayers(QWidget):
         # Helper function to clear the player's name after something is done,
         # such as when a player is entered
 
-        self.playerFirstName.setText('')
-        self.playerLastName.setText('')
+        self.player_first_name.setText('')
+        self.player_last_name.setText('')
 
-        self.playerFirstName.setFocus(True)
+        self.player_first_name.setFocus(True)
 
     def getTableData(self):
 
@@ -348,31 +349,31 @@ class EnrollPlayers(QWidget):
             playerIDItem = self.enrolled_table.item(row, 1)
             # gets the items from the table
 
-            playerLastName, playerFirstName = playerNameItem.text().split(', ')
+            player_last_name, player_first_name = playerNameItem.text().split(', ')
             # Split's first and last name, as they are combined in the cell
             # but saved separately in the xml document
             
             playerID = playerIDItem.text()
 
-            enrolled_players.append((playerID, playerFirstName, playerLastName))
+            enrolled_players.append((playerID, player_first_name, player_last_name))
             # appends a tuple with the information to the enrolled_players list
 
         return enrolled_players
         # This is passed to writeToFile
 
-    def loadEvent(self, event):
+    def loadTournament(self, tournament):
 
         # Helper function to load the event so it can be accessed by
         # the other methods
 
-        tree = ET.parse(event)
+        tree = ET.parse(tournament)
 
         return tree
         # this is used by the __init__ to load the xml tree
 
     def writeToFile(self, enrolled_players):
 
-        players = self.Tournament[1]
+        players = self.tournament[1]
 
         for idNum, first, last in enrolled_players:
 
@@ -384,8 +385,8 @@ class EnrollPlayers(QWidget):
             idNumber = ET.SubElement(player, 'IDNumber')
             idNumber.text = idNum
 
-            firstName = ET.SubElement(player, 'FirstName')
-            firstName.text = first
+            first_name = ET.SubElement(player, 'FirstName')
+            first_name.text = first
 
             lastName = ET.SubElement(player, 'LastName')
             lastName.text = last
@@ -398,9 +399,9 @@ class EnrollPlayers(QWidget):
 
             # Wins and draws are both used during player pairings
 
-        to_write = self.Tree
+        to_write = self.tree
 
-        to_write.write(self.Event,
+        to_write.write(self.tournament,
                        encoding = 'utf-8',
                        xml_declaration = True)
 
@@ -422,21 +423,21 @@ class EnrollPlayers(QWidget):
             # Tournaments with less than 4 players just don't work. With 4 players
             # You can have 3 rounds and a definite winner.
 
-            self.playerFirstName.setFocus()
+            self.player_first_name.setFocus()
 
             lessThan4Error.exec_()
 
         else:
 
-            eventCreated = QMessageBox()
-            eventCreated.setIcon(QMessageBox.Information)
-            eventCreated.setText('{} Players were enrolled.'.format(total_players))
-            eventCreated.setWindowTitle('Players Successfully Enrolled')
+            tournament_created = QMessageBox()
+            tournament_created.setIcon(QMessageBox.Information)
+            tournament_created.setText('{} Players were enrolled.'.format(total_players))
+            tournament_created.setWindowTitle('Players Successfully Enrolled')
 
             # Alerts the user that players have been entered, and gives the total number
             # so the user can double check how many people have been entered.
 
-            eventCreated.exec_()
+            tournament_created.exec_()
 
             self.writeToFile(enrolled_players)
 
