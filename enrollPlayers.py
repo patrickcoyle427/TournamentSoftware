@@ -28,10 +28,6 @@ sys - used for safely exiting the program
 
 os.path - used for checking if the tournament file exists
 
-xml.etree.ElementTree - reads and writes to the tournament's xml doc, which contains
-                        all the info th e tournament software needs to make
-                        the tournament work.
-
 PyQt5.QtWidgets - Various methods for constructing a GUI
 
 PyQt5.QtCore - Contains commonly used information, in this case sorting
@@ -263,7 +259,7 @@ class EnrollPlayers(QWidget):
 
                 player_last_name, player_first_name = selection[0].text().split(', ')
 
-                editNameWindow = QDialog()
+                editNameWindow = QDialog(None, Qt.WindowCloseButtonHint)
                 # Creates a dialog box that will pop up if the user choses rename player
 
                 dialogLayout = QVBoxLayout()
